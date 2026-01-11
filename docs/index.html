@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inventario Cafetería - Login</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="d-flex align-items-center" style="min-height:100vh;">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card shadow-sm p-4">
+          <h4 class="mb-1">Inventario Cafetería</h4>
+          <p class="text-muted mb-4">Inicia sesión o regístrate</p>
+
+          <ul class="nav nav-tabs mb-3" id="tabs">
+            <li class="nav-item"><button class="nav-link active" data-mode="login" type="button">Login</button></li>
+            <li class="nav-item"><button class="nav-link" data-mode="register" type="button">Registro</button></li>
+          </ul>
+
+          <div id="msg" class="alert d-none"></div>
+
+          <form id="form">
+            <div class="mb-2">
+              <label class="form-label">Cédula</label>
+              <input class="form-control" id="cedula" placeholder="10 dígitos" maxlength="10" required>
+            </div>
+
+            <div class="mb-2 d-none" id="nombreWrap">
+              <label class="form-label">Nombre</label>
+              <input class="form-control" id="nombre" placeholder="Tu nombre">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Contraseña</label>
+              <input type="password" class="form-control" id="password" required>
+            </div>
+
+            <button class="btn btn-primary w-100" id="btnSubmit" type="submit">Ingresar</button>
+          </form>
+
+          <small class="text-muted d-block mt-3">
+            Tip: si el backend está en otro puerto/URL, cambia <b>API_BASE</b> aquí.
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:3000";
+    let mode = "login";
+
+    const msg = document.getElementById("msg");
+    const form = document.getElementById("form");
+    const tabs = document.getElementById("tabs");
+    const nombreWrap = document.getElementById("nombreWrap");
+    const btnSubmit = document.getElementById("btnSubmit");
+
+    function showMsg(text, type="danger") {
+      msg.className = `alert alert-${type}`;
+      msg.textContent = text;
+      msg.classList.remove("d-none");
+    }
+    function clearMsg(){ msg.classList.add("d-none"); }
+
+    tabs.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-mode]");
+      if (!btn) return;
+      document.querySelectorAll("#tabs .nav-link").forEach(x => x.classList.remove("active"));
+      btn.classList.add("active");
+      mode = btn.dataset.mode;
+      clearMsg();
+      nombreWrap.classList.toggle("d-none", mode !== "register");
+      btnSubmit.textContent = mode === "login" ? "Ingresar" : "Crear cuenta";
+      document.getElementById("nombre").required = (mode === "register");
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearMsg();
+
+      const cedula = document.getElementById("cedula").value.trim();
+      const nombre = document.getElementById("nombre").value.trim();
+      const password = document.getElementById("password").value;
+
+      const url = mode === "login" ? "/api/auth/login" : "/api/auth/register";
+      const payload = mode === "login"
+        ? { cedula, password }
+        : { cedula, nombre, password };
+
+      try {
+        const r = await fetch(API_BASE + url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.message || "Error");
+
+        if (mode === "register") {
+          showMsg("Cuenta creada. Ahora inicia sesión.", "success");
+          document.querySelector('button[data-mode="login"]').click();
+          return;
+        }
+
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        window.location.href = "app.html";
+      } catch (err) {
+        showMsg(err.message || "Error");
+      }
+    });
+  </script>
+</body>
+</html>

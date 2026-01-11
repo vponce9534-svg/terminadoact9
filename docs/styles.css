@@ -1,0 +1,5 @@
+body { background: #f6f7fb; }
+.card { border-radius: 14px; }
+.badge-low { background: #dc3545; }
+.badge-ok  { background: #198754; }
+.pointer { cursor: pointer; }
