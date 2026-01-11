@@ -1,4 +1,5 @@
 const API_BASE = "https://terminadoact9-backend.onrender.com";
+
 const token = localStorage.getItem("token");
 if (!token) window.location.href = "index.html";
 
